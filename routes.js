@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { asyncHandler } = require('./middleware/asyncHandler')
-const { User } = require('./models');
+const { User, Courses } = require('./models');
 
 // Construct a router instance.
 const router = express.Router();
@@ -29,4 +29,18 @@ router.post('/users', asyncHandler(async (req, res) => {
     }
   }));
   
+  // route that returns all courses including the User associated with
+  // each course and a 200 HTTP status code.
+
+  router.get('/courses', asyncHandler(async (req, res) => {
+      const courses = await Courses.findAll({
+        include: [
+          {
+            model: User,
+          },
+        ],
+      });
+      console.log(courses.map(course => course.get({ plain: true})));
+  }));
+
   module.exports = router;
