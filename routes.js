@@ -14,11 +14,29 @@ router.get('/users', asyncHandler(async (req, res) => {
 
 // Route that creates a new user.
 router.post('/users', asyncHandler(async (req, res) => {
+    let user;
     try {
-      await User.create(req.body);
-      res.status(201)
-      .json({ "message": "Account successfully created!" })
-      .location('/');
+      user = await User.create(req.body);
+      const errors = [];
+      // validate that there is a firstName value
+      if(!user.firstName){
+        errors.push('Please provide a value for firstName')
+      }
+       // validate that there is a lastName value
+       if(!user.lastName){
+        errors.push('Please provide a value for lastName')
+      }
+       // validate that there is a value for email
+       if(!user.email){
+        errors.push('Please provide a value for email')
+      }
+      // validate that there is a value for email
+      if(!user.password){
+        errors.push('Please provide a value for password')
+      }
+      res
+      .location('/')
+      .status(201).end();
     } catch (error) {
       if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
         const errors = error.errors.map(err => err.message);
@@ -61,6 +79,14 @@ router.post('/users', asyncHandler(async (req, res) => {
     let course;
    try { 
      course = await Courses.create(req.body);
+     let errors =[];
+  // validate that there is a title value
+  if(!course.title){
+    errors.push('Please provide a value for title');
+  }
+  if(!course.description){
+    errors.push('Please provide a value for description');
+  }
     res
     .location(`/courses/${course.id}`)
     .status(201).end();
