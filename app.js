@@ -59,7 +59,7 @@ app.use((err, req, res, next) => {
 
        // Sync the models
     console.log('Synchronizing the models with the database...');
-    await sequelize.sync({ force: true });
+    await sequelize.sync();
 
   } catch(error) {
 

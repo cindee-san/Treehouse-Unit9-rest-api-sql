@@ -34,13 +34,58 @@ router.post('/users', asyncHandler(async (req, res) => {
 
   router.get('/courses', asyncHandler(async (req, res) => {
       const courses = await Courses.findAll({
-        include: [
-          {
-            model: User,
-          },
-        ],
+        attributes: [
+          'userId',
+        ]
       });
-      console.log(courses.map(course => course.get({ plain: true})));
+      console.log(courses.map(course => course.get()));
+      res.json(courses).status(200);
   }));
+
+  // route that will return the corresponding course 
+  // including the User associated with that course 
+  // and a 200 HTTP status code.
+  router.get('/courses/:id', asyncHandler(async (req, res) => {
+    const courses = await Courses.findByPk(req.params.id);
+    console.log(courses);
+    if(courses) {
+      res.json(courses).status(200);
+    } else {
+      res.status(404);
+    }
+  }));
+
+  // POST route that will create a new course, 
+  // set the Location header to the URI for the newly created course, 
+  // and return a 201 HTTP status code and no content.
+  router.post('/courses', asyncHandler(async (req,res) => {
+    let course;
+   try { 
+     course = await Courses.create(req.body);
+    res
+    .location(`/courses/${course.id}`)
+    .json(course)
+    .status(201);
+  } catch (error){
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      const errors = error.errors.map(err => err.message);
+      res.status(400).json({ errors });   
+    } else {
+      throw error;
+    }
+  }
+  }));
+
+ // PUT route that will update the corresponding course 
+ // and return a 204 HTTP status code and no content.
+  router.put('/courses/:id', asyncHandler(async (req,res) => {
+
+  }));
+
+ // DELETE route that will delete the corresponding course 
+ // and return a 204 HTTP status code and no content.
+ router.delete('/courses/:id', asyncHandler(async (req,res) => {
+}));
+
 
   module.exports = router;
