@@ -1,15 +1,28 @@
 'use strict';
 
 const express = require('express');
-const { asyncHandler } = require('./middleware/asyncHandler')
+const { authenticateUser } = require('./middleware/auth-user');
+const { asyncHandler } = require('./middleware/asyncHandler');
 const { User, Courses } = require('./models');
 
 // Construct a router instance.
 const router = express.Router();
 
 // Route that returns the current authenticated user.
-router.get('/users', asyncHandler(async (req, res) => {
-    res.json(req.body).status(200);
+// filters the data values of the current user 
+// to return firstName, lastName and emailAddress
+router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
+    const user = req.currentUser;
+    const userInfo = user.dataValues;
+    const userInfoShared = Object.keys(userInfo)
+      .slice(1, 4)
+      .reduce((obj, key) => {
+        return Object.assign(obj, {
+          [key]: user[key]
+        });
+      }, {});
+
+   res.json(userInfoShared).status(200);
   }));
 
 // Route that creates a new user.
@@ -30,7 +43,7 @@ router.post('/users', asyncHandler(async (req, res) => {
        if(!user.email){
         errors.push('Please provide a value for email')
       }
-      // validate that there is a value for email
+      // validate that there is a value for password
       if(!user.password){
         errors.push('Please provide a value for password')
       }
@@ -53,6 +66,7 @@ router.post('/users', asyncHandler(async (req, res) => {
   router.get('/courses', asyncHandler(async (req, res) => {
       const courses = await Courses.findAll({
         attributes: [
+          'title',
           'userId',
         ]
       });
@@ -66,7 +80,15 @@ router.post('/users', asyncHandler(async (req, res) => {
   router.get('/courses/:id', asyncHandler(async (req, res) => {
     const course = await Courses.findByPk(req.params.id);
     if(course) {
-      res.json(course).status(200);
+      const courseInfo = course.dataValues;
+      // takes the course information and turns it into an array
+      const neededInfo = Object.entries(courseInfo)
+      // cuts "createdAt and updatedAt out of the array"
+      neededInfo.splice(5, 2);
+      // turns the array back into an object with key:value pairs
+      const displayCourseInfo = Object.fromEntries(neededInfo);
+
+      res.json(displayCourseInfo).status(200);
     } else {
       res.status(404);
     }
@@ -75,7 +97,8 @@ router.post('/users', asyncHandler(async (req, res) => {
   // POST route that will create a new course, 
   // set the Location header to the URI for the newly created course, 
   // and return a 201 HTTP status code and no content.
-  router.post('/courses', asyncHandler(async (req,res) => {
+  router.post('/courses', authenticateUser, asyncHandler(async (req,res) => {
+    const user = req.currentUser;
     let course;
    try { 
      course = await Courses.create(req.body);
@@ -102,7 +125,8 @@ router.post('/users', asyncHandler(async (req, res) => {
 
  // PUT route that will update the corresponding course 
  // and return a 204 HTTP status code and no content.
-  router.put('/courses/:id', asyncHandler(async (req,res) => {
+  router.put('/courses/:id', authenticateUser, asyncHandler(async (req,res) => {
+    const user = req.currentUser;
     let course;
     try{
       course = await Courses.findByPk(req.params.id);
@@ -124,8 +148,9 @@ router.post('/users', asyncHandler(async (req, res) => {
 
  // DELETE route that will delete the corresponding course 
  // and return a 204 HTTP status code and no content.
- router.delete('/courses/:id', asyncHandler(async (req,res) => {
-   const course = await Courses.findByPk(req.params.id);
+ router.delete('/courses/:id', authenticateUser, asyncHandler(async (req,res) => {
+  const user = req.currentUser; 
+  const course = await Courses.findByPk(req.params.id);
    await course.destroy();
    res
    .status(204).end();
