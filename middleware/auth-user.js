@@ -20,7 +20,6 @@ exports.authenticateUser = async (req, res, next) => {
       const authenticated = bcrypt.compareSync(credentials.pass, user.password);
 
       if (authenticated) {
-        // If the passwords match
         console.log(`Authentication successful for user: ${user.emailAddress}`);
         req.currentUser = user;
       } else {
@@ -34,7 +33,7 @@ exports.authenticateUser = async (req, res, next) => {
   }
   if (message) {
     console.warn(message);
-    res.status(401).json({ message: 'Access Denied' });
+    res.status(403).json({ message: 'Access Denied' });
   } else {
     next();
   }
