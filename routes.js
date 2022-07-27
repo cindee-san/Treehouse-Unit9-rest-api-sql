@@ -151,7 +151,7 @@ router.put(
     try {
       course = await Courses.findByPk(req.params.id);
       // conditional to match user ID if user with courseID of course
-      // to authenticate if the user has authorization to perform delete
+      // to authenticate if the user has authorization to perform update
       if (user.id === course.dataValues.userId) {
         if (course) {
           await course.update(req.body);
