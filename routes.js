@@ -76,7 +76,15 @@ router.get(
   "/courses",
   asyncHandler(async (req, res) => {
     const courses = await Courses.findAll({
-      attributes: ["title", "userId"],
+      attributes: {
+        exclude: ['createdAt', 'updatedAt', 'userId']
+      },
+      include:[{
+        model: User,
+        attributes: {
+          exclude:['createdAt', 'updatedAt', 'password']
+        }
+      }]
     });
     console.log(courses.map((course) => course.get()));
     res.json(courses).status(200);
@@ -89,13 +97,20 @@ router.get(
 router.get(
   "/courses/:id",
   asyncHandler(async (req, res) => {
-    const course = await Courses.findByPk(req.params.id);
+    const course = await Courses.findByPk(req.params.id, {
+      include:[{
+        model: User,
+        attributes: {
+          exclude:['createdAt', 'updatedAt', 'password']
+        }
+      }]
+    });
     if (course) {
       const courseInfo = course.dataValues;
       // takes the course information and turns it into an array
       const neededInfo = Object.entries(courseInfo);
-      // cuts "createdAt and updatedAt out of the array"
-      neededInfo.splice(5, 2);
+      // cuts "createdAt and updatedAt and 'userId' out of the array"
+      neededInfo.splice(5, 3);
       // turns the array back into an object with key:value pairs
       const displayCourseInfo = Object.fromEntries(neededInfo);
 
